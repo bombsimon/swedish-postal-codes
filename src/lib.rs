@@ -2,8 +2,6 @@ mod looks_like;
 use looks_like::LooksLikePostalCode;
 
 use std::collections::HashMap;
-use std::fs::File;
-use std::path::Path;
 
 /// PostalCode is the type which manages postal codes. It holds a map with all valid ones and a
 /// client to query for non existing ones.
@@ -43,20 +41,9 @@ impl PostalCode {
     /// setup a HTTP client when one should be needed.
     pub fn new(http_fallback: bool) -> PostalCode {
         let mut postal_codes: HashMap<u32, String> = HashMap::new();
+        let csv_bytes = include_str!("../postal_codes.csv");
+        let mut rdr = csv::Reader::from_reader(csv_bytes.as_bytes());
 
-        let current_file = file!();
-        let current_dir = Path::new(current_file)
-            .parent()
-            .unwrap()
-            .to_str()
-            .unwrap_or("");
-
-        let fr = match File::open(format!("{}/../postal_codes.csv", current_dir)) {
-            Ok(f) => f,
-            Err(e) => panic!("bad csv file: {:?}", e),
-        };
-
-        let mut rdr = csv::Reader::from_reader(fr);
         for result in rdr.deserialize() {
             let record: PostalCodeRecord = match result {
                 Ok(r) => r,
